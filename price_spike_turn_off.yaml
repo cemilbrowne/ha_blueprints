@@ -1,0 +1,63 @@
+blueprint:
+  name: Price Alert and Entity Shutdown
+  description: Sends a Pushbullet notification if the price tracking entity goes above a predefined value, then turns off specified entities and notifies which ones were turned off.
+  domain: automation
+  input:
+    price_entity:
+      name: Price Tracking Entity
+      description: The entity that tracks the price.
+      selector:
+        entity:
+          domain: sensor
+    price_threshold:
+      name: Price Threshold (cents)
+      description: The price value in cents that triggers the alert and actions.
+      selector:
+        number:
+          min: 0
+          max: 300
+    notify_device:
+      name: Pushbullet Device
+      description: The Pushbullet device to send notifications to.
+      selector:
+        text:
+          multiple: true
+    monitored_entities:
+      name: Monitored Entities
+      description: List of entities to monitor and turn off if the price exceeds the threshold.
+      selector:
+        target: 
+
+variables:
+  price_entity: !input price_entity
+  price_threshold: !input price_threshold
+  notify_device: !input notify_device
+  monitored_entities: !input monitored_entities
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input price_entity
+    value_template: "{{ state.attributes.value * 100 }}"
+    above: !input price_threshold
+
+condition: []
+
+action:
+  - variables:
+      switched_on_entities: >
+        {{ expand(variables.monitored_entities) | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | list }}
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ switched_on_entities | length > 0 }}"
+        sequence:
+          - service: notify.pushbullet
+            data:
+              target: !input notify_device
+              message: >
+                The price of {{ states(price_entity) }} has exceeded {{ price_threshold }}. Turning off the following entities: {{ switched_on_entities | join(', ') }}.
+              title: Price Alert Notification
+          - service: homeassistant.turn_off
+            target:
+              entity_id: >
+                {{ switched_on_entities | join(', ') }}
