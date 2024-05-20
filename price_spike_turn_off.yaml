@@ -53,11 +53,14 @@ action:
         sequence:
           - service: notify.pushbullet
             data:
-              target: !input notify_device
+              {% if notify_device | length > 0 %} 
+              target: >
+                {{ notify_device | join (',') }}
+              {% endif %}
               message: >
                 The price of {{ states(price_entity) }} has exceeded {{ price_threshold }}. Turning off the following entities: {{ switched_on_entities | join(', ') }}.
               title: Price Alert Notification
-          - service: homeassistant.turn_off
-            target:
-              entity_id: >
-                {{ switched_on_entities | join(', ') }}
+#          - service: homeassistant.turn_off
+#            target:
+#              entity_id: >
+#                {{ switched_on_entities | join(', ') }}
