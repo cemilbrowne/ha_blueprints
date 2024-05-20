@@ -15,6 +15,7 @@ blueprint:
       selector:
         number:
           min: 0
+          max: 100
     notify_device:
       name: Pushbullet Device
       description: The Pushbullet device to send notifications to.
