@@ -1,0 +1,56 @@
+blueprint:
+  name: Price Threshold Notification
+  description: >
+    Send a Pushbullet notification when a price tracking entity goes above a specified threshold
+    and any of the specified entities are switched on.
+  domain: automation
+  input:
+    price_entity:
+      name: Price Tracking Entity
+      description: The entity that tracks the price.
+      selector:
+        entity:
+          domain: sensor
+    threshold:
+      name: Price Threshold
+      description: The price threshold above which the notification will be sent.
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 1000000
+          unit_of_measurement: "$"
+    entities:
+      name: Entities to Check
+      description: The entities to check if they are switched on.
+      selector:
+        entity:
+          domain:
+            - switch
+            - light
+            - fan
+          multiple: true
+    pushbullet_api_key:
+      name: Pushbullet API Key
+      description: Your Pushbullet API key for sending notifications.
+      selector:
+        text:
+  trigger:
+    platform: numeric_state
+    entity_id: !input price_entity
+    above: !input threshold
+  condition:
+    condition: or
+    conditions:
+      - condition: state
+        entity_id: !input entities
+        state: "on"
+  action:
+    - service: notify.pushbullet
+      data:
+        api_key: !input pushbullet_api_key
+        title: "Price Threshold Exceeded"
+        target: !input pushbullet_api_key
+        message: >
+          The price of {{ states(!input price_entity) }} has exceeded the threshold of {{ states(!input threshold) }},
+          and one or more of the specified entities are switched on.
