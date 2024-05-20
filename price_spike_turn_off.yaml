@@ -37,7 +37,7 @@ variables:
 trigger:
   - platform: numeric_state
     entity_id: !input price_entity
-    value_template: "{{ state.attributes.value * 100 }}"
+    value_template: "{{ state * 100 }}"
     above: !input price_threshold
 
 condition: []
