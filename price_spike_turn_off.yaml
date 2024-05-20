@@ -52,11 +52,10 @@ action:
             value_template: "{{ switched_on_entities | length > 0 }}"
         sequence:
           - service: notify.pushbullet
-            data:
-              {% if notify_device | length > 0 %} 
+            data: 
+              
               target: >
                 {{ notify_device | join (',') }}
-              {% endif %}
               message: >
                 The price of {{ states(price_entity) }} has exceeded {{ price_threshold }}. Turning off the following entities: {{ switched_on_entities | join(', ') }}.
               title: Price Alert Notification
