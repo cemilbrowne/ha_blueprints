@@ -1,6 +1,6 @@
 blueprint:
   name: Price Alert and Entity Shutdown
-  description: Sends a Pushbullet notification if the price tracking entity goes above a predefined value, then turns off specified entities and notifies which ones were turned off.
+  description: Sends a Pushover notification if the price tracking entity goes above a predefined value, then turns off specified entities and notifies which ones were turned off.
   domain: automation
   input:
     price_entity:
@@ -17,9 +17,17 @@ blueprint:
         number:
           min: 0
           max: 300
+    ttl:
+      name: Time to Live (seconds)
+      description: The time for messages to sit in Pushover before expiring, in seconds.
+      default: 60
+      selector:
+        number:
+          min: 0
+          max: 86400
     notify_device:
-      name: Pushbullet Device
-      description: The Pushbullet device to send notifications to.
+      name: Pushover Device
+      description: The Pushover device to send notifications to.
       default: {}
       selector:
         text:
@@ -36,6 +44,7 @@ variables:
   price_threshold: !input price_threshold
   notify_device: !input notify_device
   monitored_entities: !input monitored_entities
+  ttl: !input ttl
 
 trigger:
   - platform: numeric_state
@@ -63,6 +72,8 @@ action:
               message: >
                 The price of ${{ states(price_entity) }} has exceeded {{ '$%.2f'| format(price_threshold | float | multiply(0.01)) }}. Turning off the following entities: {{ switched_on_entities_names | join(', ') }}.
               title: Price Alert Notification
+              ttl: >
+                {{ ttl }}
 #          - service: homeassistant.turn_off
 #            target:
 #              entity_id: >
