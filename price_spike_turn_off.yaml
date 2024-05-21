@@ -93,10 +93,10 @@ action:
                   data:
                     tag: amber_spike_turnoff_notification
 
-#          - service: homeassistant.turn_off
-#            target:
-#              entity_id: >
-#                {{ switched_on_entities | join(', ') }}
+          - service: homeassistant.turn_off
+            target:
+              entity_id: >
+                {{ switched_on_entities | join(', ') }}
           - delay: 
               seconds: "{{ ttl }}"
           - choose:
