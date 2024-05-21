@@ -26,7 +26,8 @@ blueprint:
       name: Monitored Entities
       description: List of entities to monitor and turn off if the price exceeds the threshold.
       selector:
-        target: 
+        entity: 
+          multiple: true
 
 variables:
   price_entity: !input price_entity
@@ -37,7 +38,7 @@ variables:
 trigger:
   - platform: numeric_state
     entity_id: !input price_entity
-    value_template: "{{ state * 100 }}"
+    value_template: "{{ state | float(default=1.0) | multiply(100) }}"
     above: !input price_threshold
 
 condition: []
@@ -45,19 +46,20 @@ condition: []
 action:
   - variables:
       switched_on_entities: >
-        {{ expand(variables.monitored_entities) | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | list }}
+        {{ expand(monitored_entities) | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | list }}
+      switched_on_entities_names: >
+        {{ expand(monitored_entities) | selectattr('state', 'eq', 'on') | map(attribute='attributes.friendly_name') | list }}
   - choose:
       - conditions:
           - condition: template
             value_template: "{{ switched_on_entities | length > 0 }}"
         sequence:
-          - service: notify.pushbullet
-            data: 
-              
+          - service: notify.pushover
+            data_template: 
               target: >
                 {{ notify_device | join (',') }}
               message: >
-                The price of {{ states(price_entity) }} has exceeded {{ price_threshold }}. Turning off the following entities: {{ switched_on_entities | join(', ') }}.
+                The price of {{ states(price_entity) }} has exceeded {{ price_threshold }}. Turning off the following entities: {{ switched_on_entities_names | join(', ') }}.
               title: Price Alert Notification
 #          - service: homeassistant.turn_off
 #            target:
