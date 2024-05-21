@@ -1,6 +1,6 @@
 blueprint:
   name: Price Alert and Entity Shutdown
-  description: Sends a Pushover notification if the price tracking entity goes above a predefined value, then turns off specified entities and notifies which ones were turned off.
+  description: Sends a notification if the price tracking entity goes above a predefined value, then turns off specified entities and notifies which ones were turned off.
   domain: automation
   input:
     price_entity:
@@ -19,30 +19,38 @@ blueprint:
           max: 300
     ttl:
       name: Time to Live (seconds)
-      description: The time for messages to sit in Pushover before expiring, in seconds.
+      description: The time for messages to sit in notification center before expiring, in seconds.
       default: 60
       selector:
         number:
           min: 0
           max: 86400
     notify_device:
-      name: Pushover Device
-      description: The Pushover device to send notifications to.
-      default: {}
+      name: Mobile Device
+      description: Select a device that runs the official Home Assistant app to receive notifications. If you wish to notify a group of devices, use the field below to override this selection. This can be left blank in that case
+      default: ""
       selector:
-        text:
-          multiple: true
+        device:
+          integration: mobile_app
+    notify_group:
+      name: Notification Group
+      description: |
+        The name of the group to send notifications to.
+        If set, this will override individual devices above.
+      default: ""
     monitored_entities:
       name: Monitored Entities
       description: List of entities to monitor and turn off if the price exceeds the threshold.
       selector:
-        entity: 
-          multiple: true
+        device: 
+          integration: mobile_app
 
 variables:
   price_entity: !input price_entity
   price_threshold: !input price_threshold
   notify_device: !input notify_device
+  group: !input notify_group
+  group_target: "{{ group | lower | replace('notify.', '') | replace(' ','_') }}"
   monitored_entities: !input monitored_entities
   ttl: !input ttl
 
@@ -65,15 +73,22 @@ action:
           - condition: template
             value_template: "{{ switched_on_entities | length > 0 }}"
         sequence:
-          - service: notify.pushover
-            data_template: 
-              target: >
-                {{ notify_device | join (',') }}
-              message: >
-                The price of ${{ states(price_entity) }} has exceeded {{ '$%.2f'| format(price_threshold | float | multiply(0.01)) }}. Turning off the following entities: {{ switched_on_entities_names | join(', ') }}.
-              title: Price Alert Notification
-              ttl: >
-                {{ ttl }}
+          - choose:
+            - conditions: "{{ not group_target }}"
+              sequence:
+                - device_id: !input notify_device
+                  domain: mobile_app
+                  type: notify
+                  title: "Amber Price Alert Notification"
+                  message: >
+                    The price of ${{ states(price_entity) }} has exceeded {{ '$%.2f'| format(price_threshold | float | multiply(0.01)) }}. Turning off the following entities: {{ switched_on_entities_names | join(', ') }}.
+            default:
+              - service: "notify.{{ group_target }}"
+                data:
+                  title: "Amber Price Alert Notification"
+                  message: >
+                    The price of ${{ states(price_entity) }} has exceeded {{ '$%.2f'| format(price_threshold | float | multiply(0.01)) }}. Turning off the following entities: {{ switched_on_entities_names | join(', ') }}.
+
 #          - service: homeassistant.turn_off
 #            target:
 #              entity_id: >
