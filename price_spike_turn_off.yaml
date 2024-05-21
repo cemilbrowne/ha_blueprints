@@ -82,14 +82,36 @@ action:
                   title: "Amber Price Alert Notification"
                   message: >
                     The price of ${{ states(price_entity) }} has exceeded {{ '$%.2f'| format(price_threshold | float | multiply(0.01)) }}. Turning off the following entities: {{ switched_on_entities_names | join(', ') }}.
+                  data:
+                    tag: amber_spike_turnoff_notification
             default:
               - service: "notify.{{ group_target }}"
                 data:
                   title: "Amber Price Alert Notification"
                   message: >
                     The price of ${{ states(price_entity) }} has exceeded {{ '$%.2f'| format(price_threshold | float | multiply(0.01)) }}. Turning off the following entities: {{ switched_on_entities_names | join(', ') }}.
+                  data:
+                    tag: amber_spike_turnoff_notification
 
 #          - service: homeassistant.turn_off
 #            target:
 #              entity_id: >
 #                {{ switched_on_entities | join(', ') }}
+          - delay: 
+              seconds: "{{ ttl }}"
+          - choose:
+            - conditions: "{{ not group_target }}"
+              sequence:
+                - device_id: !input notify_device
+                  domain: mobile_app
+                  type: notify
+                  message: "clear_notification"
+                  data:
+                    tag: amber_spike_turnoff_notification
+            default:
+              - service: "notify.{{ group_target }}"
+                data:
+                  message: "clear_notification"
+                  data:
+                    tag: amber_spike_turnoff_notification
+
