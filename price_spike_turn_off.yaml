@@ -61,7 +61,7 @@ action:
               target: >
                 {{ notify_device | join (',') }}
               message: >
-                The price of {{ states(price_entity) }} has exceeded {{ price_threshold | float | multiply(.01) | string }}. Turning off the following entities: {{ switched_on_entities_names | join(', ') }}.
+                The price of {{ states(price_entity) }} has exceeded {{ price_threshold | float | multiply(0.01) | string }}. Turning off the following entities: {{ switched_on_entities_names | join(', ') }}.
               title: Price Alert Notification
 #          - service: homeassistant.turn_off
 #            target:
