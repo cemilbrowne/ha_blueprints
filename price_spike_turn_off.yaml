@@ -46,9 +46,9 @@ condition: []
 action:
   - variables:
       switched_on_entities: >
-        {{ expand(monitored_entities) | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | list }}
+        {{ expand(monitored_entities) | selectattr('state', 'ne', 'off') | map(attribute='entity_id') | list }}
       switched_on_entities_names: >
-        {{ expand(monitored_entities) | selectattr('state', 'eq', 'on') | map(attribute='attributes.friendly_name') | list }}
+        {{ expand(monitored_entities) | selectattr('state', 'ne', 'off') | map(attribute='attributes.friendly_name') | list }}
   - choose:
       - conditions:
           - condition: template
@@ -59,7 +59,7 @@ action:
               target: >
                 {{ notify_device | join (',') }}
               message: >
-                The price of {{ states(price_entity) }} has exceeded {{ price_threshold |float | divide(100) }}. Turning off the following entities: {{ switched_on_entities_names | join(', ') }}.
+                The price of {{ states(price_entity) }} has exceeded {{ price_threshold | float | divide(100) }}. Turning off the following entities: {{ switched_on_entities_names | join(', ') }}.
               title: Price Alert Notification
 #          - service: homeassistant.turn_off
 #            target:
