@@ -42,8 +42,8 @@ blueprint:
       name: Monitored Entities
       description: List of entities to monitor and turn off if the price exceeds the threshold.
       selector:
-        device: 
-          integration: mobile_app
+        entity: 
+          multiple: true
 
 variables:
   price_entity: !input price_entity
