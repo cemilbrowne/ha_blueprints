@@ -12,6 +12,7 @@ blueprint:
     price_threshold:
       name: Price Threshold (cents)
       description: The price value in cents that triggers the alert and actions.
+      default: 50
       selector:
         number:
           min: 0
@@ -19,6 +20,7 @@ blueprint:
     notify_device:
       name: Pushbullet Device
       description: The Pushbullet device to send notifications to.
+      default: {}
       selector:
         text:
           multiple: true
